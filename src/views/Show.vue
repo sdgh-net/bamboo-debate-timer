@@ -100,13 +100,13 @@
             <span>
               <p class="CTime" id="CTime">{{ vue_positiveTimer }}</p>
               <p class="sideTxt sideC" id="CTime1">
-                {{ $t('timer.ui.timer.aff') }}
+                {{ get_aff_text() }}
               </p>
             </span>
             <span>
               <p class="CCTime" id="CCTime">{{ vue_negTimer }}</p>
               <p class="sideTxt sideCC" id="CCTime1">
-                {{ $t('timer.ui.timer.neg') }}
+                {{ get_neg_text() }}
               </p>
             </span>
           </div>
@@ -171,7 +171,7 @@
           >
             <span
               type="button"
-              @click="$router.push({ path: '/' })"
+              @click="closeWin"
               class="btn btn-success btn-lg"
             >
               {{ $t('timer.ui.return') }}
@@ -199,7 +199,7 @@
           </div>
         </div>
       </div>
-      <v-dialog v-model="dialog" width="500">
+<!--      <v-dialog v-model="dialog" width="500">
         <v-card>
           <v-card-title class="text-h5 primary white--text">
             使用说明
@@ -257,7 +257,7 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-dialog>-->
     </div>
   </div>
 </template>
@@ -279,20 +279,35 @@ import { replace } from 'lodash';
 
 import cloudbase from '@cloudbase/js-sdk';
 // eslint-disable-next-line import/extensions
-import offlineConfig from '@/libs/offlineConfig.js';
+// import offlineConfig from '@/assets/offlineConfig.json';
 import zh from '@/assets/lang/zh.json';
 import en from '@/assets/lang/en.json';
 // eslint-disable-next-line camelcase
 import zh_TW from '@/assets/lang/zh_TW.json';
 
+const getAssetsDir = (filepath) => `${process.env.NODE_ENV === 'development' ? './public/assets' : './resources/app/assets'}/${filepath}`;
+const config_file = getAssetsDir('config.json');
+const fs = require('fs');
+
+if (!fs.existsSync(config_file)) {
+  // eslint-disable-next-line no-alert
+  alert(`离线配置文件 ${config_file} 不存在！`);
+}
+
+const config_data = JSON.parse(fs.readFileSync(config_file));
+// console.log(config_data)
+// const debate_title_USELESS = config_data['timerId'];
+const debate_rules = config_data.rules;
+// const team = [config_data['team0'], config_data['team1']];
+// const title1 = [config_data['title0'], config_data['title1']];
+console.log('Hello from Show.vue!');
+console.log(window.location.href);
+
 const { toggle } = useFullscreen();
 
 Logger.useDefaults();
 window.addEventListener('DOMContentLoaded', () => {
-  const isSupportWebP = document
-    .createElement('canvas')
-    .toDataURL('image/webp')
-    .indexOf('data:image/webp') === 0;
+  const isSupportWebP = false;
   document.documentElement.classList.add(
     isSupportWebP ? '.hello' : '.no-support-webp',
   );
@@ -327,7 +342,7 @@ const ringBellTime = {
   second: 0,
 };
 
-const electronRules = [offlineConfig.rules];
+// const electronRules = [offlineConfig.rules];
 
 const TEAM = {
   正: 0,
@@ -392,8 +407,10 @@ let timerStatus = [0, 0];
 // 第二个代表了双计时器 -1是刚切换过来且未开始，1是正方0是反方
 let timerUsing = TYPE.大计时器;
 let rulesOriginal = [];
+let ZhiXun_side = 0; // 0与1，对应时间上限15与20
 
 const url = (i) => `../assets/${i}.wav`;
+console.log(url(1));
 // eslint-disable-next-line no-undef
 const sounds = [
   new Howl({ src: [url(1)], loop: true, autoplay: false }),
@@ -450,6 +467,21 @@ function changeTitle(strr) {
 
 function checkTimer() {
   const btnClass = DOM.methodBtn.attr('class');
+  // type,主动方,正方辩位,反方辩位,正方时间,反方时间,标题
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  const attackSide = utils.isZheng(attack);
+  if (type === TYPE.质询) {
+    if ((!CCTimerId.ongoing) && btnClass !== 'btn btn-success btn-lg') {
+      DOM.methodBtn
+        .html(i18n.t('timer.ui.start'))
+        .attr('class', 'btn btn-success btn-lg');
+    } else if (CCTimerId.ongoing && btnClass !== 'btn btn-danger btn-lg') {
+      DOM.methodBtn
+        .html(i18n.t('timer.ui.pause'))
+        .attr('class', 'btn btn-danger btn-lg');
+    }
+    return;
+  }
   if (timerUsing === TYPE.大计时器) {
     if (timerStatus[0] === 0 && btnClass !== 'btn btn-success btn-lg') {
       DOM.methodBtn
@@ -547,7 +579,9 @@ function CTimerDecline() {
 }
 
 function startCTimer() {
-  if (freeTimerTime[1] === 0) {
+//  console.log("TODO-aa");
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  if (freeTimerTime[1] === 0 && type !== TYPE.质询) {
     if (freeTimerTime[0] !== 0) startCCTimer();
   }
   if (freeTimerTime[1] <= 0.1) {
@@ -596,7 +630,9 @@ function CCTimerDecline() {
 }
 
 function startCCTimer() {
-  if (freeTimerTime[0] === 0 && freeTimerTime[1] !== 0) startCTimer();
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  const attackSide = utils.isZheng(attack);
+  if (freeTimerTime[0] === 0 && freeTimerTime[1] !== 0 && type !== TYPE.质询) startCTimer();
   if (freeTimerTime[0] <= 0.1) {
     freeTimerTime[0] = 0;
     return;
@@ -663,12 +699,28 @@ function saveTime(id) {
   rules[id][7] = timerStatus;
 }
 
+const get_aff_text = () => {
+  return '';
+  // eslint-disable-next-line no-unreachable
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  if (type === TYPE.质询) return '';
+  return '正方时间';
+};
+const get_neg_text = () => {
+  return '';
+  // eslint-disable-next-line no-unreachable
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  if (type === TYPE.质询) return '';
+  return '反方时间';
+};
+
 function changeStatusTo(id) {
   stopBigTimer();
   stopCTimer();
   stopCCTimer();
   DOM.status.show();
   DOM.emptyTitle.hide();
+  ZhiXun_side = 0;
   statusNowLocal = id;
   // type,主动方,正方辩位,反方辩位,正方时间,反方时间,标题
   const [type, attack, u1, u2, time11, time21, title] = rules[id];
@@ -677,6 +729,8 @@ function changeStatusTo(id) {
   const time2 = parseInt(time21, 10);
   const attackSide = utils.isZheng(attack);
   let str = '';
+  DOM.buttons.counterClaimSide.show();
+  DOM.buttons.claimSide.html('正');
 
   if (type === TYPE.陈词) {
     if (attackSide) str = `${i18n.t('timer.affirm')}${u1} · ${title}`;
@@ -687,6 +741,8 @@ function changeStatusTo(id) {
     }
     useBigTimer(time1 || time2);
   } else if (type === TYPE.质询) {
+    DOM.buttons.claimSide.html('发言');
+    DOM.buttons.counterClaimSide.hide();
     if (attackSide) {
       str = `${i18n.t('timer.affirm')}${u1} · ${title} · ${i18n.t(
         'timer.neg',
@@ -703,7 +759,8 @@ function changeStatusTo(id) {
         str = `${i18n.t('timer.neg')} · ${title} · ${i18n.t('timer.affirm')}`;
       }
     }
-    useBigTimer(time1 || time2);
+    // useBigTimer(time1 || time2);
+    useFreeTimer(time1, 20);
   } else if (type === TYPE.对辩) {
     if (attackSide) {
       str = `${i18n.t('timer.affirm')}${u1} · ${title} · ${i18n.t(
@@ -779,9 +836,25 @@ function declineStatus() {
   changeStatusTo(statusNowLocal - 1);
 }
 
+function shouldShowTimerText() {
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  if (type === TYPE.质询) {
+    return false;
+  }
+  return true;
+}
+
 // eslint-disable-next-line no-unused-vars
 function changeStatus() {
   Logger.debug('histatus');
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  const attackSide = utils.isZheng(attack);
+  if (type === TYPE.质询) {
+    // eslint-disable-next-line brace-style
+    if (!CCTimerId.ongoing) { startCCTimer(); startCTimer(); }
+    else { stopCCTimer(); stopCTimer(); }
+    return;
+  }
   if (timerUsing === TYPE.双计时器) {
     if (timerStatus[1] === -1) {
       startCCTimer();
@@ -797,6 +870,28 @@ function changeStatus() {
 }
 
 function startSide(side) {
+  const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
+  const attackSide = utils.isZheng(attack);
+  if (type === TYPE.质询) {
+    // TODO
+    // ?
+    // console.log(timerStatus);
+    // console.log(side);
+    if (timerStatus[1] !== 0) {
+    // console.log("start")
+      startCTimer();
+    } else {
+      // console.log("stop")
+      stopCTimer();
+      freeTimerTime[1] = (ZhiXun_side ? 20 : 15);
+      ZhiXun_side = 1 - ZhiXun_side;
+      // eslint-disable-next-line no-constant-condition
+      if (false) {
+        startCTimer();
+      }
+    }
+    return;
+  }
   // 当目前在暂停的时候，side要另外判断
   Logger.debug(CTimerId);
   Logger.debug(CCTimerId);
@@ -873,8 +968,8 @@ function dealOthers(data) {
   }
   rulesOriginal = JSON.parse(JSON.stringify(rules));
   changeStatusTo(0);
-  const team = [getDecode('t0'), getDecode('t1')];
-  const title1 = [getDecode('n0'), getDecode('n1')];
+  const team = [config_data.team0, config_data.team1];
+  const title1 = [config_data.title0, config_data.title1];
   if (team[0] !== false) {
     $('#teamName-C').html(team[0]);
     $('#teamName-CC').html(team[1]);
@@ -972,7 +1067,7 @@ async function loadRule() {
   Logger.debug(getQueryVariable('off'));
   if (getQueryVariable('off') !== false) {
     if (getQueryVariable('off') === 'true') {
-      const rule = electronRules[0];
+      const rule = debate_rules;
       Logger.debug(rule);
       [res.battle.title] = rule.split('||');
       DOM.titleJ.html();
@@ -1099,10 +1194,11 @@ function changeRatio() {
 }
 
 const documentReady = () => {
+//  console.log("document is ready.")
   setTimeout(async () => {
-    Logger.warn('HELLO WORLD');
-    Logger.debug(document);
-    Logger.debug(window);
+    //    Logger.warn('HELLO WORLD');
+    //    Logger.debug(document);
+    //    Logger.debug(window);
     const { userAgent } = navigator; // 取得浏览器的userAgent字符串
     if (userAgent.indexOf('Firefox') > -1) {
       // 判断是否Firefox浏览器
@@ -1162,6 +1258,7 @@ const documentReady = () => {
     };
     const { battle, team } = res;
     if (battle.title.length >= 18) DOM.titleJ.addClass('two-line');
+    console.log(battle, team);
     DOM.titleJ.html(battle.title);
     $('#teamName-C').html(team[0]);
     $('#teamName-CC').html(team[1]);
@@ -1269,12 +1366,18 @@ export default {
       this.dialog = false;
       this.$refs.lastBtn.className = 'btn btn-success btn-lg animate__animated animate__bounce animate__repeat-3';
     },
+    closeWin() {
+      this.$electron.ipcRenderer.send('window-close');
+    },
+
   },
   data() {
     return {
       dialog: true,
       isElectron: process.env.IS_ELECTRON,
       spaceKeyMap: '空格',
+      get_aff_text,
+      get_neg_text,
     };
   },
   mounted() {

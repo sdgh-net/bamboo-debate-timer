@@ -434,6 +434,7 @@
 </template>
 
 <script setup="props, {emit}">
+/* eslint-disable no-alert */
 import draggable from 'vuedraggable';
 import axios from 'axios';
 // import * as R from 'ramda';

@@ -2,5 +2,9 @@
 chcp 65001
 cd offline
 python main32.py
+cd ..
 
-explorer C:\001-Dev\25-bamboo\off-generator\offline\timers
+cd dist_electron\win-ia32-unpacked
+bamboo-drag.exe
+cd ..\..
+pause

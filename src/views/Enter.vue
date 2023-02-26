@@ -386,43 +386,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
-      v-model="crashDialog"
-      width="500"
-    >
-      <v-card>
-        <v-card-title class="text-h5 warning white--text">
-          重要提醒！
-        </v-card-title>
 
-        <v-card-text class="text-left">
-          <br>
-
-          重要提醒！<br>
-          为了计时器能够进一步发展，为大家提供更多功能，自1.28版本开始，我们将放弃对老旧的浏览器的支持。
-          它们包括但不限于 【IE浏览器任意版本】【Chrome54以下版本】等。 <br/>
-          如果很不幸你将要使用的浏览器符合上述描述，或者在实际测试中遇到了不能正常使用的情况：
-          1. 请使用一个停止更新的兼容版：
-          <v-btn href="https://legacy.timer.bianlun.online" color="primary" small>兼容版</v-btn>
-          <h3 class="red--text">2. 如果你对你将要使用计时器的电脑中浏览器环境不确定，强烈建议你申请离线版计时器。</h3>
-
-          <br/>
-          <h3>服务器迁移已经完成，如果遇到问题，可以加vx yuzhuohao反馈~</h3>
-          <h3>顺便，可以了解一下我们提供的离线版计时器（加群992868670）。不受网络、电脑束缚，一键启动，用了都说好，线下辩论你值得拥有。</h3>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-<!--          我已了解【IE浏览器】已不再受支持-->
-          <v-btn
-            color="warning"
-            @click="crashDialog = false"
-          >
-            我已了解【IE浏览器】已不再受支持
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 <style lang="scss" scoped>
@@ -444,7 +408,7 @@ import md5 from 'js-md5';
 import { Base64 } from 'js-base64';
 import axios from 'axios';
 // eslint-disable-next-line import/extensions
-import offlineConfig from '@/libs/offlineConfig';
+// import offlineConfig from '@/libs/offlineConfig';
 // eslint-disable-next-line import/extensions
 import { nowVersion, updateLogs, updateTime } from '@/libs/version';
 import CompCodeCard from '../components/enterCards/CompCodeCard.vue';
@@ -452,6 +416,13 @@ import CompCodeCard from '../components/enterCards/CompCodeCard.vue';
 import ChangeCard from '../components/enterCards/ChangeCard.vue';
 import FeedbackCard from '../components/enterCards/FeedbackCard.vue';
 import ChangeLogCard from '../components/enterCards/ChangeLogCard.vue';
+
+const getAssetsDir = (filepath) => `${process.env.NODE_ENV === 'development' ? './public/assets' : './resources/app/assets'}/${filepath}`;
+const config_file = getAssetsDir('config.json');
+const fs = require('fs');
+
+const debate_title = JSON.parse(fs.readFileSync(config_file)).timerId;
+console.log('Enter-GO!');
 
 export default {
   name: 'Enter',
@@ -471,14 +442,20 @@ export default {
     ],
   },
   async mounted() {
+    console.log('Enter-MOUNT!');
     this.languageSelection = this.$i18n.locale;
+    if (this.isElectron) {
+      this.userIpInfo.country = '中国';
+      console.log('Jump to url!');
+      this.computedUrl();
+      return;
+    }
     const { data: { data: { data: { country } } } } = await axios.get('https://hn216.api.yesapi.cn/?s=Ext.IP.GetInfo&return_data=0&app_key=6EC14C1A2BD1952E71390CFCB082858F&sign=33B5DE7F62ED98031FCA0AA8D9C26B4A');
     console.log(country);
     if (country !== '中国') {
       if (window.location.href.indexOf('asia') === -1) this.ipDialog = true;
     }
     this.userIpInfo.country = country;
-    if (this.isElectron) return;
     if (this.$route.query.rid !== undefined) {
       this.code = this.$route.query.rid;
     } else {
@@ -498,7 +475,7 @@ export default {
     this.goodCodes = content;
   },
   data() {
-    const elecCode = offlineConfig.timerId;
+    const elecCode = debate_title;
     return {
       ringBellTime: 30,
       languageSelection: 'zh',
@@ -514,7 +491,7 @@ export default {
       isElectron: process.env.IS_ELECTRON === true,
       lastUpdateTime: updateTime,
       updateTxt: updateLogs,
-      electronTimerId: offlineConfig.timerId,
+      electronTimerId: debate_title,
       search: '',
       headers: [
         {
@@ -565,10 +542,10 @@ export default {
       ],
       customBackground: false,
       customBackgroundPass: '',
-      t0: '',
-      t1: '',
-      n0: '',
-      n1: '',
+      t0: '《《》》辩题1',
+      t1: '《《》》辩题2',
+      n0: '《《》》组名1',
+      n1: '《《》》组名2',
       useUserColor: false,
       useColorCode: false,
       color: {
@@ -591,7 +568,7 @@ export default {
       useNotifySound: true,
       code: process.env.IS_ELECTRON ? elecCode : '',
       watermarkStr: this.$t('enter.settings.watermarkHint'),
-      displayWatermark: true,
+      displayWatermark: false,
     };
   },
   methods: {
@@ -643,6 +620,7 @@ export default {
         //   this.n1,
         // )}`;
       }
+      console.log('going to show page:');
       console.log(params);
       this.$router.push({ name: 'Show', query: params });
       return str;

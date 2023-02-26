@@ -8,7 +8,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-
+// const isDevelopment = true;
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
@@ -24,12 +24,20 @@ async function createWindow() {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration
       // for more info
-      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
+      nodeIntegration: true,
+      contextIsolation: false,
+      nativeWindowOpen: true,
     },
   });
   Menu.setApplicationMenu(null);
-
+  if (isDevelopment) {
+    win.webContents.openDevTools({ mode: 'undocked' });
+  }
+  // eslint-disable-next-line global-require
+  const { ipcMain } = require('electron');
+  ipcMain.on('window-close', () => {
+    win.close();
+  });
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
@@ -65,6 +73,7 @@ app.on('ready', async () => {
     try {
       await installExtension(VUEJS_DEVTOOLS);
     } catch (e) {
+      // eslint-disable-next-line import/no-extraneous-dependencies,no-console
       console.error('Vue Devtools failed to install:', e.toString());
     }
   }

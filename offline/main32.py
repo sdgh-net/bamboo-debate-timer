@@ -4,6 +4,7 @@ import json
 
 import configparser
 import hashlib
+os.putenv("ELECTRON_BUILDER_BINARIES_MIRROR", "https://npmmirror.com/mirrors/electron-builder-binaries/")
 
 curpath = os.path.dirname(os.path.realpath(__file__))
 cfgpath = os.path.join(curpath, "config.ini")
@@ -14,6 +15,7 @@ conf = configparser.ConfigParser()
 conf.read(cfgpath, encoding="utf-8")
 
 sections = conf.sections()
+'''
 timer_id = input('请输入计时码:')
 
 lc_id = conf.get('leancloud', 'appId')
@@ -51,11 +53,15 @@ export default offlineConfig;
 with open('../src/libs/offlineConfig.js', 'w', encoding='utf-8', newline='') as f:
   f.write(js_out)
 # %%
+'''
 ver = '1.21.901'
 os.system("cd .. && npm run electron:build32")
+'''
 #%%
 import shutil
+tr_name = "aa"
 exe_path = os.path.abspath(f"../dist_electron/bamboo-drag Setup {ver}.exe")
 this_path = os.path.abspath(f"./timers/32位·辩之竹计时器·{tr_name}.exe")
 shutil.copy(exe_path, this_path)
 # %%
+'''

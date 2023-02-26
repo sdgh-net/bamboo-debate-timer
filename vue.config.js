@@ -3,6 +3,7 @@ const Renderer = PrerenderSPAPlugin.PuppeteerRenderer;
 const path = require('path');
 
 module.exports = {
+  // lintOnSave: false,
   devServer: {
     // host: '0.0.0.0', //host改成自己的IP
     // 查阅 https://github.com/vuejs/vue-doc-zh-cn/vue-cli/cli-service.md#配置代理
@@ -14,13 +15,14 @@ module.exports = {
   pluginOptions: {
     _: 'lodash',
     electronBuilder: {
+      nodeIntegration: true,
       builderOptions: {
         asar: false,
         win: {
           icon: './public/electron.ico',
           target: [
             {
-              target: 'nsis',
+              target: 'portable',
               arch: [
                 "ia32"
               ]

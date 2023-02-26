@@ -22,6 +22,8 @@ require('vue-tour/dist/vue-tour.css');
 
 Vue.config.productionTip = false;
 Vue.prototype.$qs = qs;
+const electron = window.require('electron');
+Vue.prototype.$electron = electron;
 
 router.beforeEach((to, from, next) => {
   /* 路由发生变化修改页面title */
@@ -36,11 +38,13 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
-AV.init({
-  appId: process.env.VUE_APP_LEANCLOUD_ID,
-  appKey: process.env.VUE_APP_LEANCLOUD_KEY,
-  serverURL: `https://${process.env.VUE_APP_LEANCLOUD_HOST}`,
-});
+if (!process.env.IS_ELECTRON) {
+  AV.init({
+    appId: process.env.VUE_APP_LEANCLOUD_ID,
+    appKey: process.env.VUE_APP_LEANCLOUD_KEY,
+    serverURL: `https://${process.env.VUE_APP_LEANCLOUD_HOST}`,
+  });
+}
 
 Vue.use(VueI18n);
 Vue.use(vcolorpicker);
@@ -53,6 +57,7 @@ const i18n = new VueI18n({
   locale: 'zh',
   messages: {
     zh,
+    // eslint-disable-next-line camelcase
     zh_TW,
     en,
   },
