@@ -185,7 +185,7 @@ html {
 
 /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
 ::-webkit-scrollbar {
-  width: 2px; /*滚动条宽度*/
+  width: 0px; /*滚动条宽度，不然会导致Electron全屏时出现白边*/
   /*height: 2px;  !*滚动条高度*!*/
 }
 

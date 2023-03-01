@@ -6,16 +6,34 @@ import {
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+const remote = require("@electron/remote/main")
+remote.initialize()
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-// const isDevelopment = true;
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
+// app.commandLine.appendSwitch("--disable-http-cache")
+// app.commandLine.appendSwitch("--disable-gpu")
+// app.disableHardwareAcceleration()
+app.commandLine.appendSwitch('lang', 'zh-CN')
+var win
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  setTimeout(() => {
+    app.relaunch()
+    app.quit()
+  }, 100)
+}
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  app.quit()
+})
 async function createWindow() {
+  // Don't do anything until the other instance die.
+  if (!gotTheLock) { return }
   // Create the browser window.
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1600,
     height: 900,
     // frame: false,
@@ -27,8 +45,13 @@ async function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
       nativeWindowOpen: true,
+      enableRemoteModule: true,
+      webSecurity: false,
     },
   });
+  remote.enable(win.webContents);
+  win.setFullScreen(true);
+  win.setSimpleFullScreen(true);
   Menu.setApplicationMenu(null);
   if (isDevelopment) {
     win.webContents.openDevTools({ mode: 'undocked' });

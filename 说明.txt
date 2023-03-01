@@ -1,0 +1,52 @@
+npm config set registry https://registry.npmmirror.com/
+set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+npm install --legacy-peer-deps
+rmdir /s /q node_modules\electron
+npm install electron --legacy-peer-deps
+随便改一下 .env.* 里的 AppId
+
+npm run electron:serve
+chcp 65001
+npm run electron:build
+
+这是基于开源项目制作的辩论赛计时器，相关代码以GPLv3开源于 https://github.com/sdgh-net/bamboo-debate-timer
+1. 禁止默认使用md4算法，防止报错
+// REF: https://juejin.cn/post/7202639428132044858
+// node_modules\webpack\lib\util\createHash.js
+// if (algorithm === "md4") { algorithm = "sha256"; }
+// node_modules\terser-webpack-plugin\dist\index.js
+2. 自动读取配置并进入计时页面
+3. 将“返回主页”改为“退出”
+4. 禁止加载webp格式图片
+5. 为对辩环节根据规则修改了计时器机制，将右边的计时器改为问/答发言时长
+6. 隐藏“正方时间”、“反方时间”
+7. 使用JSON存储以支持动态修改比赛信息
+8. 默认打包为绿色版
+9. 略微修改愚蠢的 ESLint
+10. 塞了个DevTools，因此改了这里 https://blog.csdn.net/weixin_41568995/article/details/120352394
+11. 多实例同时启动时自动退出旧实例
+12. 进入计时器强制全屏
+13. 允许通过"--config-file"参数加载指定配置文件
+14. 去除了对于离线版无用的追踪器与代码
+15. 自动删除locales中多余pak文件
+
+const config_file = '../assets/config.json';
+const fs = require('fs');
+config_data = JSON.parse(fs.readFileSync(config_file));
+const debate_title = config_data['timerId'];
+const debate_rules = config_data['rules'];
+
+const team = [config_data['team0'], config_data['team1']];
+const title1 = [config_data['title0'], config_data['title1']];
+
+删掉：const electronRules = [offlineConfig.rules];
+const rule = electronRules[0]; 改为 const rule = debate_rules;
+
+{
+  "timerId": "it-doesnt-matter",
+  "rules": "国华辩论赛20230223||0,0,一辩,一辩,180,180,立论;0,1,一辩,一辩,180,180,立论;1,0,二辩,,120,120,攻辩;1,1,,二辩,120,120,攻辩;1,0,三辩,,120,120,攻辩;1,1,,三辩,120,120,攻辩;0,0,一辩,一辩,90,90,攻辩小结;0,1,一辩,一辩,90,90,攻辩小结;3,0,,,240,240,自由辩论;0,1,四辩,四辩,180,180,总结陈词;0,0,四辩,四辩,180,180,总结陈词",
+  "team0": "测试队1",
+  "team1": "测试队2",
+  "title0": "辩题1",
+  "title1": "辩题2"
+}

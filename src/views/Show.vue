@@ -1,6 +1,5 @@
-¶
 <template>
-  <div class="con" ref="conn">
+  <div class="full con" ref="conn">
     <div
       class="body1 support-webp"
       oncontextmenu="return false;"
@@ -45,45 +44,6 @@
         tabindex="0"
         style="background-color:rgb(53,73,82);"
       >
-        <p
-          style="font-family: 'Digiface';color: red; position: fixed; bottom: 0;font-size: 30px;"
-          id="load-font"
-        >
-          如果网页这里没有出现弹窗，一片空白，你可以看到这行文字，请先耐心等待几秒钟看看会不会只是网络太卡。<br/>
-          如果等待一段时间仍然没有任何变化，你还是可以看到这行文字，这说明你在使用的浏览器太过于古老，计时器很不幸并不支持它。<br/>
-          你可以做的尝试：<br/>
-          ①如果使用的是国产的浏览器（如搜狗浏览器，QQ浏览器），在网址栏的末尾看看有没有一个IE浏览器的图标，点它一下。（或者百度搜索“XX浏览器
-          如何开启极速模式”）<br/>
-          ②如果使用的是IE（Internet
-          Explorer），请换成一个现代一些的浏览器，如Chrome，或者QQ浏览器之类的。<br/>
-          <br/>
-          如果你的情况并不满足上述两条，可以加QQ群992868670来反馈。<br/>
-          同时，紧急情况下可以直接加微信：yuzhuohao来反馈。
-        </p>
-        <p
-          style="color: blue; position: fixed; top: 0;font-size: 30px;display:none;"
-          id="load-font-2"
-          class="text-left px-10 py-10"
-        >
-          如果网页这里没有出现弹窗，一片空白，你可以看到这行文字，这有两个原因。<br/>
-          一是你的网络不太稳定，建议你<span class="red--text"
-        >多刷新几次或者更换网络</span
-        >再试；<br/>
-          二是如果多次刷新仍然没有任何变化，你还是可以看到这行
-          文字，这说明你在使用的浏览器太过于古老，计时器很不幸
-          <span class="red--text">并不支持它</span>。<br/>
-          你可以做的尝试：<br/>
-          ①如果使用的是国产的浏览器（如搜狗浏览器，QQ浏览器），在网址栏的末尾看看有没有一个IE浏览器的图标，点它一下。（或者百度搜索“XX浏览器
-          如何开启极速模式”）<br/>
-          ②如果使用的是IE（Internet
-          Explorer），请换成一个现代一些的浏览器，如Chrome，或者QQ浏览器之类的。<br/>
-          <span class="red--text"
-          >③【强烈推荐】申请离线版（加下面的那个QQ群）</span
-          ><br/>
-          <br/>
-          如果你的情况并不满足上述两条，可以加QQ群992868670来反馈。<br/>
-          同时，紧急情况下可以直接加微信：yuzhuohao来反馈。
-        </p>
         <div class="up">
           <p class="teamName teamNameC" id="teamName-C"></p>
           <p class="teamName teamNameCC" id="teamName-CC"></p>
@@ -177,7 +137,7 @@
               {{ $t('timer.ui.return') }}
             </span>
           </div>
-          <div class="btn-group mr-2" role="group" aria-label="Second group">
+          <div class="btn-group mr-2" role="group" aria-label="Second group" style="display:none;">
             <span
               type="button"
               @click="toggleFull"
@@ -285,10 +245,30 @@ import en from '@/assets/lang/en.json';
 // eslint-disable-next-line camelcase
 import zh_TW from '@/assets/lang/zh_TW.json';
 
-const getAssetsDir = (filepath) => `${process.env.NODE_ENV === 'development' ? './public/assets' : './resources/app/assets'}/${filepath}`;
-const config_file = getAssetsDir('config.json');
 const fs = require('fs');
+const { process: { argv } } = require('@electron/remote');
+const path = require('path'); // eslint-disable-line global-require
 
+let testBasePath = ''; // eslint-disable-line no-unused-vars
+switch (process.env.NODE_ENV) {
+  case 'development':
+    testBasePath = path.join(__static); // eslint-disable-line no-undef
+    break;
+  case 'production':
+    testBasePath = path.join(process.resourcesPath, 'app');
+    break;
+  default:
+    break;
+}
+// console.log(__static); // eslint-disable-line no-undef
+// console.log(path.join(process.resourcesPath, 'app', 'assets'));
+// eslint-disable-next-line max-len
+// const getAssetsDir = (filepath) => `${process.env.NODE_ENV === 'development' ? './public/assets' : './resources/app/assets'}/${filepath}`;
+const getAssetsDir = (filepath) => path.join(testBasePath, 'assets', filepath);
+let config_file = getAssetsDir('config.json');
+if (argv.length >= 2 && argv[argv.length - 2] === '--config-file') {
+  config_file = argv[argv.length - 1];
+}
 if (!fs.existsSync(config_file)) {
   // eslint-disable-next-line no-alert
   alert(`离线配置文件 ${config_file} 不存在！`);
@@ -407,7 +387,7 @@ let timerStatus = [0, 0];
 // 第二个代表了双计时器 -1是刚切换过来且未开始，1是正方0是反方
 let timerUsing = TYPE.大计时器;
 let rulesOriginal = [];
-let ZhiXun_side = 0; // 0与1，对应时间上限15与20
+let ZhiXun_side = 0; // 0与1，对应时间上限20(原15)与20
 
 const url = (i) => `../assets/${i}.wav`;
 console.log(url(1));
@@ -851,7 +831,7 @@ function changeStatus() {
   const attackSide = utils.isZheng(attack);
   if (type === TYPE.质询) {
     // eslint-disable-next-line brace-style
-    if (!CCTimerId.ongoing) { startCCTimer(); startCTimer(); }
+    if (!CCTimerId.ongoing) { startCCTimer(); }
     else { stopCCTimer(); stopCTimer(); }
     return;
   }
@@ -873,17 +853,13 @@ function startSide(side) {
   const [type, attack, u1, u2, time11, time21, title] = rules[statusNowLocal];
   const attackSide = utils.isZheng(attack);
   if (type === TYPE.质询) {
-    // TODO
-    // ?
-    // console.log(timerStatus);
-    // console.log(side);
     if (timerStatus[1] !== 0) {
     // console.log("start")
       startCTimer();
     } else {
       // console.log("stop")
       stopCTimer();
-      freeTimerTime[1] = (ZhiXun_side ? 20 : 15);
+      freeTimerTime[1] = (ZhiXun_side ? 20 : 20);
       ZhiXun_side = 1 - ZhiXun_side;
       // eslint-disable-next-line no-constant-condition
       if (false) {
@@ -1250,9 +1226,9 @@ const documentReady = () => {
         }, 5000);
       } else if (keyCode === KEYMAP.R) {
         resetTime();
-      } else if (keyCode === KEYMAP['<']) {
+      } else if (keyCode === KEYMAP[',']) {
         startSide(0);
-      } else if (keyCode === KEYMAP['>']) {
+      } else if (keyCode === KEYMAP['.']) {
         startSide(1);
       }
     };

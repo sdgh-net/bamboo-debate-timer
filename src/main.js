@@ -20,9 +20,10 @@ import { genDb } from './libs/db-const';
 
 require('vue-tour/dist/vue-tour.css');
 
+const electron = window.require('electron');
+
 Vue.config.productionTip = false;
 Vue.prototype.$qs = qs;
-const electron = window.require('electron');
 Vue.prototype.$electron = electron;
 
 router.beforeEach((to, from, next) => {
