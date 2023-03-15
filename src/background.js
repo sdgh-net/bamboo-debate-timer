@@ -36,8 +36,10 @@ async function createWindow() {
   win = new BrowserWindow({
     width: 1600,
     height: 900,
-    // frame: false,
-    // transparent: true,
+    show: false,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration
@@ -48,6 +50,10 @@ async function createWindow() {
       enableRemoteModule: true,
       webSecurity: false,
     },
+  });
+  win.on('ready-to-show', () => {
+    // 初始化后再显示
+    win.show();
   });
   remote.enable(win.webContents);
   win.setFullScreen(true);

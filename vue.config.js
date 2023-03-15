@@ -24,7 +24,8 @@ module.exports = {
             {
               target: 'portable',
               arch: [
-                "ia32"
+                "ia32",
+                "x64"
               ]
             }
           ]

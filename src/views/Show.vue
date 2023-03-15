@@ -272,12 +272,25 @@ if (argv.length >= 2 && argv[argv.length - 2] === '--config-file') {
 if (!fs.existsSync(config_file)) {
   // eslint-disable-next-line no-alert
   alert(`离线配置文件 ${config_file} 不存在！`);
+  // this.$electron.ipcRenderer.send('window-close');
 }
 
-const config_data = JSON.parse(fs.readFileSync(config_file));
+let buff = fs.readFileSync(config_file);
+if (buff[0].toString(16).toLowerCase() === 'ef' && buff[1].toString(16).toLowerCase() === 'bb' && buff[2].toString(16).toLowerCase() === 'bf') {
+  buff = buff.slice(3);
+}
+let config_data;
+try {
+  config_data = JSON.parse(buff);
+} catch (error) {
+  // eslint-disable-next-line no-alert
+  alert(`离线配置文件 ${config_file} 解析错误！请检查逗号等是否正确！`);
+  // this.$electron.ipcRenderer.send('window-close');
+}
 // console.log(config_data)
 // const debate_title_USELESS = config_data['timerId'];
 const debate_rules = config_data.rules;
+const debate_title = config_data.title;
 // const team = [config_data['team0'], config_data['team1']];
 // const title1 = [config_data['title0'], config_data['title1']];
 console.log('Hello from Show.vue!');
@@ -338,6 +351,8 @@ const KEYMAP = {
   '<': 188,
   '>': 190,
   B: 66,
+  ',': 188,
+  '.': 190,
 };
 let DOM = {};
 const TYPE = {
@@ -831,7 +846,7 @@ function changeStatus() {
   const attackSide = utils.isZheng(attack);
   if (type === TYPE.质询) {
     // eslint-disable-next-line brace-style
-    if (!CCTimerId.ongoing) { startCCTimer(); }
+    if (!CCTimerId.ongoing) { freeTimerTime[1] = 20; startCCTimer(); }
     else { stopCCTimer(); stopCTimer(); }
     return;
   }
@@ -855,6 +870,7 @@ function startSide(side) {
   if (type === TYPE.质询) {
     if (timerStatus[1] !== 0) {
     // console.log("start")
+      freeTimerTime[1] = 20;
       startCTimer();
     } else {
       // console.log("stop")
@@ -933,10 +949,7 @@ function getDecode(key) {
 
 function dealOthers(data) {
   Logger.debug(data);
-  const title = data.split('||')[0];
-  DOM.titleJ.html(title);
-  Logger.debug(DOM);
-  Logger.debug(DOM.titleJ);
+  const title = debate_title;
   DOM.titleJ.html(title);
   const ruleArr = data.split('||')[1].split(';');
   for (let i = 0; i < ruleArr.length; i += 1) {
@@ -1045,7 +1058,7 @@ async function loadRule() {
     if (getQueryVariable('off') === 'true') {
       const rule = debate_rules;
       Logger.debug(rule);
-      [res.battle.title] = rule.split('||');
+      [res.battle.title] = debate_title;
       DOM.titleJ.html();
       dealOthers(rule);
       return;

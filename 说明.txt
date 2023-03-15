@@ -25,10 +25,13 @@ npm run electron:build
 9. 略微修改愚蠢的 ESLint
 10. 塞了个DevTools，因此改了这里 https://blog.csdn.net/weixin_41568995/article/details/120352394
 11. 多实例同时启动时自动退出旧实例
-12. 进入计时器强制全屏
+12. 进入计时器强制全屏（并修复了一行CSS）
 13. 允许通过"--config-file"参数加载指定配置文件
 14. 去除了对于离线版无用的追踪器与代码
 15. 自动删除locales中多余pak文件
+16. 同时生成x64与x86版本
+17. JSON配置文件兼容BOM
+18. 进入计时器时不显示加载完成前的白屏
 
 const config_file = '../assets/config.json';
 const fs = require('fs');
